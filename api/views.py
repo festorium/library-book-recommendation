@@ -27,7 +27,6 @@ import numpy as np
 
 secret = os.environ.get('secret')
 JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM')
-AUTHORIZATION = 'Authorization'
 FRONTEND_URL = ""
 
 

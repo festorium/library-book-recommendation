@@ -31,7 +31,7 @@ def test_recommendations_response_time(user_id):
     response_time = end_time - start_time
 
     assert response.status_code == 200, "Response status code is not 200"
-    assert response_time < 2, "Response time is too slow"
+    assert response_time < 1, "Response time is too slow"
 
     response_data = response.json()
     assert response_data.get('ok') is True, "Response does not indicate success"

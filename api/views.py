@@ -191,7 +191,7 @@ def login(request):
             "user_id": user.user_id,
         }
 
-        Log.objects.create(user_id=user, action='User login', ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action='User login', ip_address=request.META.get('REMOTE_ADDR'))
 
     except Exception as e:
         response.data = {
@@ -531,7 +531,7 @@ def add_to_favorites(request):
             "details": "Book added to favorites."
         }
         
-        Log.log_action(user=user, action="Book added to favorites", ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action="Book added to favorites", ip_address=request.META.get('REMOTE_ADDR'))
     except Exception as e:
         response.data = {
             "ok": False,
@@ -578,7 +578,7 @@ def remove_from_favorites(request):
             "details": "Book removed from favorites."
         }
         
-        Log.log_action(user=user, action="Book removed from favorites", ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action="Book removed from favorites", ip_address=request.META.get('REMOTE_ADDR'))
     except Exception as e:
         response.data = {
             "ok": False,
@@ -611,13 +611,13 @@ def get_recommendations(request):
 def recommend_books(user, request):
     try:
         # Log the start of the recommendation process
-        Log.log_action(user=user, action="Recommendation process started", ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action="Recommendation process started", ip_address=request.META.get('REMOTE_ADDR'))
 
         # Get the user's favorite books (up to 20)
         favorites = Favorite.objects.filter(user=user).select_related('book')[:20]
 
         if not favorites.exists():
-            Log.log_action(user=user, action="No favorite books found", ip_address=request.META.get('REMOTE_ADDR'))
+            Log.log_action(user_id=user, action="No favorite books found", ip_address=request.META.get('REMOTE_ADDR'))
             return []
 
         # Generate feature matrix for favorite books
@@ -636,16 +636,16 @@ def recommend_books(user, request):
         recommended_books = [all_books[i] for i in recommended_indices]
 
         # Log successful recommendation generation
-        Log.log_action(user=user, action="Recommendations generated successfully", ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action="Recommendations generated successfully", ip_address=request.META.get('REMOTE_ADDR'))
 
         return recommended_books
 
     except DatabaseError as e:
         # Log database-related errors
-        Log.log_action(user=user, action=f"Database error occurred: {str(e)}", ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action=f"Database error occurred: {str(e)}", ip_address=request.META.get('REMOTE_ADDR'))
         return []
 
     except Exception as e:
         # Log any other exceptions
-        Log.log_action(user=user, action=f"Error occurred during recommendation: {str(e)}", ip_address=request.META.get('REMOTE_ADDR'))
+        Log.log_action(user_id=user, action=f"Error occurred during recommendation: {str(e)}", ip_address=request.META.get('REMOTE_ADDR'))
         return []

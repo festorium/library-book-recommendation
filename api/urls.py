@@ -24,6 +24,7 @@ urlpatterns = [
 
     # Favorites and Recommendations
     path('favorites/', add_to_favorites, name='add_to_favorites'),
+    path('remove.favorite/', remove_from_favorites, name='remove_from_favorites'),
     path('recommendations/', get_recommendations, name='get_recommendations'),
    
 ]

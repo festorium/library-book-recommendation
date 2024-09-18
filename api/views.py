@@ -534,6 +534,52 @@ def add_to_favorites(request):
         }
     return response
 
+#  Remove a book from a user's favorites (protected).
+@api_view(['POST'])
+@CheckAuth
+def remove_from_favorites(request):
+    response = Response()
+    try:
+        user = UserData.objects.filter(user_id=request.data['user_id']).first()
+        book_id = request.data['book_id']
+
+        if user is None:
+            response.data = {
+                "ok": False,
+                "details": "User not found"
+            }
+            return response
+
+        book = Book.objects.filter(id=book_id).first()
+        if book is None:
+            response.data = {
+                "ok": False,
+                "details": "Book not found"
+            }
+            return response
+
+        favorite = Favorite.objects.filter(user=user, book=book).first()
+        if favorite is None:
+            response.data = {
+                "ok": False,
+                "details": "Book not in favorites"
+            }
+            return response
+
+        favorite.delete()
+
+        response.data = {
+            "ok": True,
+            "details": "Book removed from favorites."
+        }
+    except Exception as e:
+        response.data = {
+            "ok": False,
+            "details": f"An error occurred: {str(e)}"
+        }
+    return response
+
+
 #  Retrieve a list of recommended books for the user based on their favorites.
 @api_view(['GET'])
 @CheckAuth
@@ -562,7 +608,7 @@ def recommend_books(user):
     if not favorites.exists():
         return []
 
-    # Generate feature matrix for favorite books (e.g., genre, author)
+    # Generate feature matrix for favorite books
     favorite_books = [favorite.book for favorite in favorites]
     favorite_features = np.array([book.get_feature_vector() for book in favorite_books])
 

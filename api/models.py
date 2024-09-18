@@ -146,4 +146,8 @@ class Log(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     
     def __str__(self):
-        return f"{self.user} - {self.action} at {self.timestamp}"
+        return f"{self.user_id} - {self.action} at {self.timestamp}"
+    
+    @staticmethod
+    def log_action(user, action, ip_address=None):
+        Log.objects.create(user_id=user, action=action, ip_address=ip_address)

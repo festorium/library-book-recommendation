@@ -23,6 +23,9 @@ from .permission import CheckAuth
 from .notification import send_email_verification
 from rest_framework.decorators import api_view 
 import numpy as np 
+from django.db.models import Prefetch
+from django.db import DatabaseError
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 secret = os.environ.get('secret')
@@ -527,6 +530,8 @@ def add_to_favorites(request):
             "ok": True,
             "details": "Book added to favorites."
         }
+        
+        Log.log_action(user=user, action="Book added to favorites", ip_address=request.META.get('REMOTE_ADDR'))
     except Exception as e:
         response.data = {
             "ok": False,
@@ -572,6 +577,8 @@ def remove_from_favorites(request):
             "ok": True,
             "details": "Book removed from favorites."
         }
+        
+        Log.log_action(user=user, action="Book removed from favorites", ip_address=request.META.get('REMOTE_ADDR'))
     except Exception as e:
         response.data = {
             "ok": False,
@@ -601,26 +608,44 @@ def get_recommendations(request):
         }
     return response
 
-def recommend_books(user):
-    # Get the user's favorite books (up to 20)
-    favorites = Favorite.objects.filter(user=user).select_related('book')[:20]
+def recommend_books(user, request):
+    try:
+        # Log the start of the recommendation process
+        Log.log_action(user=user, action="Recommendation process started", ip_address=request.META.get('REMOTE_ADDR'))
 
-    if not favorites.exists():
+        # Get the user's favorite books (up to 20)
+        favorites = Favorite.objects.filter(user=user).select_related('book')[:20]
+
+        if not favorites.exists():
+            Log.log_action(user=user, action="No favorite books found", ip_address=request.META.get('REMOTE_ADDR'))
+            return []
+
+        # Generate feature matrix for favorite books
+        favorite_books = [favorite.book for favorite in favorites]
+        favorite_features = np.array([book.get_feature_vector() for book in favorite_books])
+
+        # Get all other books not in the favorite list
+        all_books = Book.objects.exclude(id__in=[book.id for book in favorite_books])
+        all_books_features = np.array([book.get_feature_vector() for book in all_books])
+
+        # Calculate similarity between favorites and all other books
+        similarity_scores = cosine_similarity(favorite_features, all_books_features)
+
+        # Get top 5 recommended books based on the highest similarity scores
+        recommended_indices = similarity_scores.argsort()[-5:][::-1]
+        recommended_books = [all_books[i] for i in recommended_indices]
+
+        # Log successful recommendation generation
+        Log.log_action(user=user, action="Recommendations generated successfully", ip_address=request.META.get('REMOTE_ADDR'))
+
+        return recommended_books
+
+    except DatabaseError as e:
+        # Log database-related errors
+        Log.log_action(user=user, action=f"Database error occurred: {str(e)}", ip_address=request.META.get('REMOTE_ADDR'))
         return []
 
-    # Generate feature matrix for favorite books
-    favorite_books = [favorite.book for favorite in favorites]
-    favorite_features = np.array([book.get_feature_vector() for book in favorite_books])
-
-    # Get all other books not in the favorite list
-    all_books = Book.objects.exclude(id__in=[book.id for book in favorite_books])
-    all_books_features = np.array([book.get_feature_vector() for book in all_books])
-
-    # Calculate similarity between favorites and all other books
-    similarity_scores = cosine_similarity(favorite_features, all_books_features)
-
-    # Get top 5 recommended books based on the highest similarity scores
-    recommended_indices = similarity_scores.argsort()[-5:][::-1]
-    recommended_books = [all_books[i] for i in recommended_indices]
-
-    return recommended_books
+    except Exception as e:
+        # Log any other exceptions
+        Log.log_action(user=user, action=f"Error occurred during recommendation: {str(e)}", ip_address=request.META.get('REMOTE_ADDR'))
+        return []

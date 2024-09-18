@@ -14,52 +14,12 @@ Logging: Track user actions and system events.
 
 -- Models
 UserData
-user_id: Unique identifier for the user.
-username: User's username.
-first_name: User's first name.
-last_name: User's last name.
-email: User's email address.
-phone: User's phone number.
-address: User's address.
-created_at: Timestamp when the user was created.
-updated_at: Timestamp when the user was last updated.
-is_active: Boolean indicating if the user is active.
-is_staff: Boolean indicating if the user has staff privileges.
-
 Author
-name: Author's name.
-Genre
-name: Genre name.
-
 Book
-title: Book title.
-author: Foreign key to Author.
-published_date: Date when the book was published.
-genres: Many-to-many relationship with Genre.
-summary: Book summary.
-
 Favorite
-user: Foreign key to UserData.
-book: Foreign key to Book.
-added_at: Timestamp when the book was added to favorites.
-
 Recommendation
-user: Foreign key to UserData.
-recommended_books: Many-to-many relationship with Book.
-recommended_at: Timestamp when recommendations were made.
-
 NotifyMessage
-user: Foreign key to UserData.
-message: Notification message.
-url: Optional URL related to the message.
-date: Timestamp when the message was created.
-is_read: Boolean indicating if the message has been read.
-
 Log
-user_id: Foreign key to UserData.
-action: Description of the action.
-timestamp: Timestamp when the action occurred.
-ip_address: IP address from which the action was performed.
 
 -- Serializers
 UserDataSerializer: Serializes user data.

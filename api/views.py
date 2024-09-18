@@ -279,34 +279,24 @@ def get_book(request, id):
 def create_book(request):
     response = Response()
     try:
-        if 'title' not in request.data or 'author_id' not in request.data:
+        serializer = BookSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            response.data = {
+                "ok": True,
+                "details": "Book created successfully.",
+                "book": serializer.data
+            }
+        else:
             response.data = {
                 "ok": False,
-                "details": "Invalid request. Missing title or author."
+                "details": serializer.errors
             }
-            return response
-
-        title = request.data['title']
-        author = Author.objects.filter(id=request.data['author_id']).first()
-
-        if author is None:
-            response.data = {
-                "ok": False,
-                "details": "Author not found"
-            }
-            return response
-
-        book = Book.objects.create(title=title, author=author)
-        book.save()
-
-        response.data = {
-            "ok": True,
-            "details": "Book created successfully."
-        }
     except Exception as e:
         response.data = {
             "ok": False,
-            "details": "An error occurred while creating the book."
+            "details": f"An error occurred: {str(e)}"
         }
     return response
 
@@ -325,28 +315,24 @@ def update_book(request, id):
             }
             return response
 
-        title = request.data.get('title', book.title)
-        author = Author.objects.filter(id=request.data.get('author_id', book.author.id)).first()
-
-        if author is None:
+        serializer = BookSerializer(book, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            response.data = {
+                "ok": True,
+                "details": "Book updated successfully.",
+                "book": serializer.data
+            }
+        else:
             response.data = {
                 "ok": False,
-                "details": "Author not found"
+                "details": serializer.errors
             }
-            return response
-
-        book.title = title
-        book.author = author
-        book.save()
-
-        response.data = {
-            "ok": True,
-            "details": "Book updated successfully."
-        }
     except Exception as e:
         response.data = {
             "ok": False,
-            "details": "An error occurred while updating the book."
+            "details": f"An error occurred: {str(e)}"
         }
     return response
 
@@ -427,25 +413,24 @@ def get_author(request, id):
 def create_author(request):
     response = Response()
     try:
-        if 'name' not in request.data:
+        serializer = AuthorSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            response.data = {
+                "ok": True,
+                "details": "Author created successfully.",
+                "author": serializer.data
+            }
+        else:
             response.data = {
                 "ok": False,
-                "details": "Invalid request. Missing author name."
+                "details": serializer.errors
             }
-            return response
-
-        name = request.data['name']
-        author = Author.objects.create(name=name)
-        author.save()
-
-        response.data = {
-            "ok": True,
-            "details": "Author created successfully."
-        }
     except Exception as e:
         response.data = {
             "ok": False,
-            "details": "An error occurred while creating the author."
+            "details": f"An error occurred: {str(e)}"
         }
     return response
 
@@ -464,18 +449,24 @@ def update_author(request, id):
             }
             return response
 
-        name = request.data.get('name', author.name)
-        author.name = name
-        author.save()
+        serializer = AuthorSerializer(author, data=request.data, partial=True)
 
-        response.data = {
-            "ok": True,
-            "details": "Author updated successfully."
-        }
+        if serializer.is_valid():
+            serializer.save()
+            response.data = {
+                "ok": True,
+                "details": "Author updated successfully.",
+                "author": serializer.data
+            }
+        else:
+            response.data = {
+                "ok": False,
+                "details": serializer.errors
+            }
     except Exception as e:
         response.data = {
             "ok": False,
-            "details": "An error occurred while updating the author."
+            "details": f"An error occurred: {str(e)}"
         }
     return response
 

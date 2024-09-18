@@ -54,10 +54,22 @@ class UserData(AbstractBaseUser, PermissionsMixin):
     user_permissions = models.ManyToManyField(Permission, related_name='userdata_user_permissions', verbose_name='user permissions')
 
 class Author(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     name = models.CharField(max_length=255)
+    gender = models.CharField(max_length=50, blank=True, null=True)
+    image_url = models.URLField(max_length=500, blank=True, null=True)
+    about = models.TextField(blank=True, null=True)
+    ratings_count = models.IntegerField(default=0)
+    average_rating = models.FloatField(default=0.0)
+    text_reviews_count = models.IntegerField(default=0)
+    work_ids = models.JSONField()  # Assuming list of work IDs
+    book_ids = models.JSONField()  # Assuming list of book IDs
+    works_count = models.IntegerField(default=0)
+    fans_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=100)
@@ -66,13 +78,35 @@ class Genre(models.Model):
         return self.name
 
 class Book(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     title = models.CharField(max_length=255)
-    author = models.ForeignKey(Author, related_name='books', on_delete=models.CASCADE)
-    published_date = models.DateField()
-    genres = models.ManyToManyField('Genre', related_name='books') 
-    summary = models.TextField(null=True, blank=True) 
+    author_name = models.CharField(max_length=255)
+    author_id = models.CharField(max_length=100)
+    work_id = models.CharField(max_length=100)
+    isbn = models.CharField(max_length=13, blank=True, null=True)
+    isbn13 = models.CharField(max_length=13, blank=True, null=True)
+    asin = models.CharField(max_length=50, blank=True, null=True)
+    language = models.CharField(max_length=50)
+    average_rating = models.FloatField(default=0.0)
+    rating_dist = models.CharField(max_length=500)
+    ratings_count = models.IntegerField(default=0)
+    text_reviews_count = models.IntegerField(default=0)
+    publication_date = models.CharField(max_length=50, blank=True, null=True)
+    original_publication_date = models.CharField(max_length=50, blank=True, null=True)
+    format = models.CharField(max_length=100, blank=True, null=True)
+    edition_information = models.CharField(max_length=255, blank=True, null=True)
+    image_url = models.URLField(max_length=500, blank=True, null=True)
+    publisher = models.CharField(max_length=255, blank=True, null=True)
+    num_pages = models.IntegerField(default=0)
+    series_id = models.CharField(max_length=100, blank=True, null=True)
+    series_name = models.CharField(max_length=255, blank=True, null=True)
+    series_position = models.CharField(max_length=50, blank=True, null=True)
+    shelves = models.JSONField()  # Assuming list of shelf data
+    description = models.TextField(blank=True, null=True)
+
     def __str__(self):
         return self.title
+
 
     def get_feature_vector(self):
         genre_vector = [genre.id for genre in self.genres.all()]
